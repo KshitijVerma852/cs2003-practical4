@@ -1,0 +1,24 @@
+{
+	"name": "dead-media-api",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"express": "^4.18.2"
+	},
+	"devDependencies": {
+		"prettier": "^3.0.3"
+	},
+	"prettier": {
+		"arrowParens": "avoid",
+		"useTabs": true,
+		"tabWidth": 4,
+		"trailingComma": "none"
+	}
+}

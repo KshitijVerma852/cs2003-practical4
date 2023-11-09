@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Radiohead - OK Computer",
+    "type": "CD",
+    "desc": "Iconic alternative rock album by Radiohead."
+  },
+  {
+    "name": "Pulp Fiction",
+    "type": "DVD",
+    "desc": "Quentin Tarantino's cult classic crime film."
+  },
+  {
+    "name": "Pink Floyd - The Wall",
+    "type": "CD",
+    "desc": "Concept album and rock opera by Pink Floyd."
+  },
+  {
+    "name": "Fight Club",
+    "type": "DVD",
+    "desc": "Edgy film about an underground fight club."
+  },
+  {
+    "name": "Beastie Boys - Licensed to Ill",
+    "type": "CD",
+    "desc": "Debut hip-hop album by the Beastie Boys."
+  },
+  {
+    "name": "Blade Runner 2049",
+    "type": "DVD",
+    "desc": "Visually stunning sci-fi film sequel."
+  },
+  {
+    "name": "Nirvana - Nevermind",
+    "type": "CD",
+    "desc": "Seminal grunge album by Nirvana."
+  },
+  {
+    "name": "The Matrix",
+    "type": "DVD",
+    "desc": "Mind-bending science fiction action film."
+  },
+  {
+    "name": "Daft Punk - Discovery",
+    "type": "CD",
+    "desc": "Electronic music masterpiece by Daft Punk."
+  },
+  {
+    "name": "Inception",
+    "type": "DVD",
+    "desc": "Mind-bending science fiction film by Christopher Nolan."
+  },
+  {
+    "name": "The Rolling Stones - Exile on Main St.",
+    "type": "CD",
+    "desc": "Classic rock album by The Rolling Stones."
+  },
+  {
+    "name": "Akira",
+    "type": "DVD",
+    "desc": "Influential Japanese anime film."
+  },
+  {
+    "name": "David Bowie - Ziggy Stardust",
+    "type": "CD",
+    "desc": "Iconic glam rock concept album."
+  },
+  {
+    "name": "A Clockwork Orange",
+    "type": "DVD",
+    "desc": "Dystopian crime film directed by Stanley Kubrick."
+  },
+  {
+    "name": "Massive Attack - Mezzanine",
+    "type": "CD",
+    "desc": "Trip-hop masterpiece by Massive Attack."
+  },
+  {
+    "name": "The Shawshank Redemption",
+    "type": "DVD",
+    "desc": "Acclaimed prison drama film."
+  },
+  {
+    "name": "The Prodigy - The Fat of the Land",
+    "type": "CD",
+    "desc": "Electronic music album by The Prodigy."
+  },
+  {
+    "name": "Pulp - Different Class",
+    "type": "CD",
+    "desc": "Britpop album by Pulp."
+  },
+  {
+    "name": "Trainspotting",
+    "type": "DVD",
+    "desc": "Cult British film about addiction and friendship."
+  },
+  {
+    "name": "Gorillaz - Demon Days",
+    "type": "CD",
+    "desc": "Alternative hip-hop album by Gorillaz."
+  }
+]
