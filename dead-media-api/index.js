@@ -39,6 +39,9 @@ const parseAndValidateFile = filePath => {
 
 parseAndValidateFile(DEADMEDIA_PATH);
 
+// TODO: test all endpoint, test that the status code actually work.
+
+
 app.get("/media", async (req, res) => {
 	const allMedia = await mediaStore.retrieveAll();
 	allMedia.forEach(media => {
@@ -46,13 +49,25 @@ app.get("/media", async (req, res) => {
 		media.id = `/media/${originalId}`;
 	});
 	if (allMedia.length > 0) {
-		res.status(200).json(allMedia);
+		return res.status(200).json(allMedia);
 	} else if (allMedia.length === 0) {
-		res.status(204).json(allMedia);
+		return res.status(204).json(allMedia);
+	} else {
+		return res.status(500);
+	}
+});
+
+app.get("/media/:id", async (req, res) => {
+	const requiredId = req.params.id;
+	const mediaObj = await mediaStore.retrieve(parseInt(requiredId));
+	if (mediaObj) {
+		res.status(200).json(mediaObj);
+	} else if (mediaObj === undefined) {
+		res.status(404);
 	} else {
 		res.status(500);
 	}
-});
+})
 
 app.listen(PORT, () => {
 	console.log(`http://localhost:${PORT}`);
