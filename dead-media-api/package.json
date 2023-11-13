@@ -4,6 +4,7 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
+		"start": "nodemon index.js data/deadmedia.json",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"keywords": [],
@@ -13,6 +14,7 @@
 		"express": "^4.18.2"
 	},
 	"devDependencies": {
+		"nodemon": "^3.0.1",
 		"prettier": "^3.0.3"
 	},
 	"prettier": {

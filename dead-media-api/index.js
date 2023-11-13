@@ -1,8 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
-const { MediaStore } = require("../store");
-const { all } = require("express/lib/application");
+const { MediaStore } = require("./store");
 const app = express();
 const mediaStore = new MediaStore();
 
@@ -41,17 +40,19 @@ parseAndValidateFile(DEADMEDIA_PATH);
 
 // TODO: test all endpoint, test that the status code actually work.
 
-
 app.get("/media", async (req, res) => {
 	const allMedia = await mediaStore.retrieveAll();
+	const result = [];
 	allMedia.forEach(media => {
-		const originalId = media.id;
-		media.id = `/media/${originalId}`;
+		result.push({
+			...media,
+			id: `/media/${media.id}`
+		});
 	});
 	if (allMedia.length > 0) {
-		return res.status(200).json(allMedia);
+		return res.status(200).json(result);
 	} else if (allMedia.length === 0) {
-		return res.status(204).json(allMedia);
+		return res.status(204).json(result);
 	} else {
 		return res.status(500);
 	}
@@ -59,15 +60,25 @@ app.get("/media", async (req, res) => {
 
 app.get("/media/:id", async (req, res) => {
 	const requiredId = req.params.id;
-	const mediaObj = await mediaStore.retrieve(parseInt(requiredId));
-	if (mediaObj) {
-		res.status(200).json(mediaObj);
-	} else if (mediaObj === undefined) {
-		res.status(404);
-	} else {
-		res.status(500);
+	try {
+		const mediaObj = await mediaStore.retrieve(parseInt(requiredId));
+		mediaObj.id = `/media/${requiredId}`;
+		if (mediaObj) {
+			res.status(200).json(mediaObj);
+		}
+	} catch (e) {
+		res.status(404).json({ error: "Not found" });
 	}
-})
+});
+
+// TODO: Add tests to this. Check if the object actually is created or not, POST to this endpoint first then use the GET by id endpoint to check.
+app.post("/media", async (req, res) => {
+	const { name, type, desc } = req.body;
+	await mediaStore.create(name, type, desc);
+	return res.status(201).json({success: "true"});
+});
+
+
 
 app.listen(PORT, () => {
 	console.log(`http://localhost:${PORT}`);
