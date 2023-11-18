@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
-const {MediaStore} = require("./store");
+const { MediaStore } = require("./store");
 const app = express();
 const mediaStore = new MediaStore();
 
@@ -10,7 +10,7 @@ app.use(express.json());
 const PORT = 4000;
 const DEADMEDIA_PATH = process.argv[2];
 
-const checkIfValidDeadMedia = ({name, type, desc}) => {
+const checkIfValidDeadMedia = ({ name, type, desc }) => {
 	const legalTypes = ["TAPE", "CD", "DVD"];
 	return name.length < 40 && legalTypes.includes(type) && desc.length < 200;
 };
@@ -21,13 +21,11 @@ const parseAndValidateFile = filePath => {
 	fs.createReadStream(path.join(__dirname, filePath)).on("data", row => {
 		try {
 			const data = JSON.parse(row);
-			data.forEach(deadMedia => {
-				if (!checkIfValidDeadMedia(deadMedia)) {
+			data.forEach(async ({ name, type, desc }) => {
+				if (!checkIfValidDeadMedia({ name, type, desc })) {
 					console.log("Invalid JSON");
 				} else {
-					mediaStore
-						.create(deadMedia.name, deadMedia.type, deadMedia.desc)
-						.then(id => console.log(`Saved media object ${id}`));
+					await mediaStore.create(name, type, desc);
 				}
 			});
 		} catch (e) {
@@ -38,20 +36,36 @@ const parseAndValidateFile = filePath => {
 
 parseAndValidateFile(DEADMEDIA_PATH);
 
-// TODO: test all endpoint, test that the status code actually work.
+// TODO: test all endpoints, test that the status code actually work.
 
 app.get("/media", async (req, res) => {
-	const allMedia = await mediaStore.retrieveAll();
+	let { name, type, desc, limit, offset } = req.query;
 	const result = [];
-	allMedia.forEach(media => {
-		result.push({
-			...media,
-			id: `/media/${media.id}`
+	if (limit && offset) {
+		limit = parseInt(limit);
+		offset = parseInt(offset);
+		for (let x = offset; x < offset + limit; x++) {
+			try {
+				result.push({
+					...(await mediaStore.retrieve(x)),
+					id: `/media/${x}`
+				});
+			} catch (e) {
+				return res.status(404).json({ error: "here" });
+			}
+		}
+	} else {
+		const allMedia = await mediaStore.retrieveAll();
+		allMedia.forEach(media => {
+			result.push({
+				...media,
+				id: `/media/${media.id}`
+			});
 		});
-	});
-	if (allMedia.length > 0) {
+	}
+	if (result.length > 0) {
 		return res.status(200).json(result);
-	} else if (allMedia.length === 0) {
+	} else if (result.length === 0) {
 		return res.status(204).json(result);
 	} else {
 		return res.status(500);
@@ -69,23 +83,23 @@ app.get("/media/:id", async (req, res) => {
 			res.status(200).json(mediaObj);
 		}
 	} catch (e) {
-		res.status(404).json({error: "Not found"});
+		res.status(404).json({ error: "Not found" });
 	}
 });
 
 // TODO: Add tests to this. Check if the object actually is created or not, POST to this endpoint first then use the GET by id endpoint to check.
 app.post("/media", async (req, res) => {
-	const {name, type, desc} = req.body;
+	const { name, type, desc } = req.body;
 	await mediaStore.create(name, type, desc);
-	return res.status(201).json({success: true});
+	return res.status(201).json({ success: true });
 });
 
 // TODO: Add tests to this. Check if the object actually is created or not, POST to this endpoint first then use the GET by id endpoint to check.
-// TODO: Not tested at all, should work hopefully.
+// TODO: Check how to receive data, currently doing it through request headers.
 app.put("/media/:id", async (req, res) => {
-	const {name, type, desc} = req.body;
+	const { name, type, desc } = req.body;
 	await mediaStore.update(req.params.id, name, type, desc);
-	return res.status(200).json({success: true});
+	return res.status(200).json({ success: true });
 });
 
 // TODO: Add tests to this. Check if the object actually is created or not, POST to this endpoint first then use the GET by id endpoint to check.
@@ -95,14 +109,14 @@ app.delete("/media/:id", async (req, res) => {
 		const media = await mediaStore.retrieve(parseInt(req.params.id));
 		try {
 			await mediaStore.delete(req.params.id);
-			res.status(204).json({success: true})
+			res.status(204).json({ success: true });
 		} catch (e) {
 			res.status(500);
 		}
 	} catch (e) {
-		res.status(404).json({error: e})
+		res.status(404).json({ error: e });
 	}
-})
+});
 
 app.listen(PORT, () => {
 	console.log(`http://localhost:${PORT}`);
