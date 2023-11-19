@@ -39,17 +39,38 @@ parseAndValidateFile(DEADMEDIA_PATH);
 // TODO: test all endpoints, test that the status code actually work.
 
 app.get("/media", async (req, res) => {
+	console.log("here");
 	let { name, type, desc, limit, offset } = req.query;
+	const queryName = !!name;
+	const queryType = !!type;
+	const queryDesc = !!desc;
+	console.log(name, type, desc);
+
 	const result = [];
 	if (limit && offset) {
 		limit = parseInt(limit);
 		offset = parseInt(offset);
 		for (let x = offset; x < offset + limit; x++) {
 			try {
-				result.push({
-					...(await mediaStore.retrieve(x)),
-					id: `/media/${x}`
-				});
+				let valid = false;
+				const mediaObj = await mediaStore.retrieve(x);
+				const values = Object.values(mediaObj);
+				console.log(values, "---");
+				console.log(values.includes(name));
+
+				// if (queryName) valid = values.includes(name);
+				valid = queryName ? values.includes(name) : valid;
+				valid = queryType ? values.includes(type) : valid;
+				valid = queryDesc ? values.includes(desc) : valid;
+				// if (queryType) valid = values.includes(type);
+				// if (queryDesc) valid = values.includes(desc);
+
+				valid
+					? result.push({
+							...(await mediaStore.retrieve(x)),
+							id: `/media/${x}`
+					  })
+					: {};
 			} catch (e) {
 				return res.status(404).json({ error: "here" });
 			}
