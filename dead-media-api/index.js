@@ -39,41 +39,26 @@ parseAndValidateFile(DEADMEDIA_PATH);
 // TODO: test all endpoints, test that the status code actually work.
 
 app.get("/media", async (req, res) => {
-	console.log("here");
 	let { name, type, desc, limit, offset } = req.query;
 	const queryName = !!name;
 	const queryType = !!type;
 	const queryDesc = !!desc;
-	console.log(name, type, desc);
+	const queries = queryName || queryType || queryDesc;
 
 	const result = [];
+
 	if (limit && offset) {
 		limit = parseInt(limit);
 		offset = parseInt(offset);
 		for (let x = offset; x < offset + limit; x++) {
+			let mediaObj = {};
 			try {
-				let valid = false;
-				const mediaObj = await mediaStore.retrieve(x);
-				const values = Object.values(mediaObj);
-				console.log(values, "---");
-				console.log(values.includes(name));
-
-				// if (queryName) valid = values.includes(name);
-				valid = queryName ? values.includes(name) : valid;
-				valid = queryType ? values.includes(type) : valid;
-				valid = queryDesc ? values.includes(desc) : valid;
-				// if (queryType) valid = values.includes(type);
-				// if (queryDesc) valid = values.includes(desc);
-
-				valid
-					? result.push({
-							...(await mediaStore.retrieve(x)),
-							id: `/media/${x}`
-					  })
-					: {};
-			} catch (e) {
-				return res.status(404).json({ error: "here" });
-			}
+				mediaObj = await mediaStore.retrieve(x);
+			} catch (e) {}
+			result.push({
+				...mediaObj,
+				id: `/media/${x}`
+			});
 		}
 	} else {
 		const allMedia = await mediaStore.retrieveAll();
@@ -84,10 +69,27 @@ app.get("/media", async (req, res) => {
 			});
 		});
 	}
-	if (result.length > 0) {
-		return res.status(200).json(result);
-	} else if (result.length === 0) {
-		return res.status(204).json(result);
+	let valid = true;
+	let finalResults = [];
+
+	if (queries) {
+		result.forEach(mediaObj => {
+			const values = Object.values(mediaObj);
+			if (queryName && valid) valid = values.includes(name);
+			if (queryType && valid) valid = values.includes(type);
+			if (queryDesc && valid) valid = values.includes(desc);
+
+			valid ? finalResults.push(mediaObj) : null;
+			valid = true;
+		});
+	} else {
+		finalResults = result;
+	}
+
+	if (finalResults.length > 0) {
+		return res.status(200).json(finalResults);
+	} else if (finalResults.length === 0) {
+		return res.status(204).json(finalResults);
 	} else {
 		return res.status(500);
 	}
