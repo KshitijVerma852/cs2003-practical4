@@ -1,13 +1,14 @@
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
+const axios = require("axios");
 const { MediaStore } = require("./store");
 const app = express();
 const mediaStore = new MediaStore();
 
 app.use(express.json());
 
-const PORT = 4000;
+const PORT = 24751;
 const DEADMEDIA_PATH = process.argv[2];
 
 const checkIfValidDeadMedia = ({ name, type, desc }) => {
@@ -141,6 +142,24 @@ app.delete("/media/:id", async (req, res) => {
 	}
 });
 
+const validTransfer = ({ source, target }) => source && target;
+
+// TODO: Basically works, make better.
+app.post("/transfer", async (req, res) => {
+	if (validTransfer(req.body)) {
+		const id = parseInt(req.body.source.slice(7));
+		const mediaObj = await mediaStore.retrieve(id);
+		await axios({
+			method: "POST",
+			url: req.body.target,
+			data: mediaObj
+		});
+		await mediaStore.delete(id);
+	}
+});
+
 app.listen(PORT, () => {
 	console.log(`http://localhost:${PORT}`);
 });
+
+module.exports = app;

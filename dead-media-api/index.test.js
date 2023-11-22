@@ -1,5 +1,13 @@
+const supertest = require("supertest");
+const app = require("./index");
+const PORT = 24751;
+
+beforeAll(() => {
+	app.listen(PORT);
+});
+
 describe("R1.1", () => {
 	test("Test 1", () => {
-		console.log("hello world");
+		supertest(app).get("/media").expect("Content-Type", /json/).expect(200);
 	});
 });
