@@ -2,11 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const axios = require("axios");
-const { MediaStore } = require("./store");
-const app = express();
-const mediaStore = new MediaStore();
-
-app.use(express.json());
 
 const PORT = 24751;
 const DEADMEDIA_PATH = process.argv[2];
@@ -16,150 +11,204 @@ const checkIfValidDeadMedia = ({ name, type, desc }) => {
 	return name.length < 40 && legalTypes.includes(type) && desc.length < 200;
 };
 
-// TODO: wrap around try catch block if file doesn't exist.
-// TODO: test this functionL if file doesn't exist or if JSON is invalid
-const parseAndValidateFile = filePath => {
-	fs.createReadStream(path.join(__dirname, filePath)).on("data", row => {
-		try {
-			const data = JSON.parse(row);
-			data.forEach(async ({ name, type, desc }) => {
-				if (!checkIfValidDeadMedia({ name, type, desc })) {
-					console.log("Invalid JSON");
-				} else {
-					await mediaStore.create(name, type, desc);
+const parseAndValidateFile = async (filePath, mediaStore) => {
+	await fs
+		.createReadStream(path.join(__dirname, filePath))
+		.on("data", async row => {
+			try {
+				const data = JSON.parse(row);
+				for (let x = 0; x < data.length; x++) {
+					checkIfValidDeadMedia(data[x])
+						? await mediaStore.create(
+								data[x].name,
+								data[x].type,
+								data[x].desc
+						  )
+						: {};
 				}
-			});
-		} catch (e) {
-			console.log(e);
-		}
-	});
+			} catch (e) {
+				console.log(e);
+			}
+		});
 };
 
-parseAndValidateFile(DEADMEDIA_PATH);
+const startApp = mediaStore => {
+	const app = express();
 
-// TODO: test all endpoints, test that the status code actually work.
+	app.use(express.json());
+	app.get("/media", async (req, res) => {
+		let { name, type, desc, limit, offset } = req.query;
+		const queryName = !!name;
+		const queryType = !!type;
+		const queryDesc = !!desc;
+		const queries = queryName || queryType || queryDesc;
+		offset = offset ? offset : 0;
 
-app.get("/media", async (req, res) => {
-	let { name, type, desc, limit, offset } = req.query;
-	const queryName = !!name;
-	const queryType = !!type;
-	const queryDesc = !!desc;
-	const queries = queryName || queryType || queryDesc;
-
-	const result = [];
-
-	if (limit && offset) {
-		limit = parseInt(limit);
-		offset = parseInt(offset);
-		for (let x = offset; x < offset + limit; x++) {
-			let mediaObj = {};
-			try {
-				mediaObj = await mediaStore.retrieve(x);
-			} catch (e) {}
-			result.push({
-				...mediaObj,
-				id: `/media/${x}`
-			});
-		}
-	} else {
-		const allMedia = await mediaStore.retrieveAll();
-		allMedia.forEach(media => {
-			result.push({
-				...media,
-				id: `/media/${media.id}`
-			});
-		});
-	}
-	let valid = true;
-	let finalResults = [];
-
-	if (queries) {
-		result.forEach(mediaObj => {
-			const values = Object.values(mediaObj);
-			if (queryName && valid) valid = values.includes(name);
-			if (queryType && valid) valid = values.includes(type);
-			if (queryDesc && valid) valid = values.includes(desc);
-
-			valid ? finalResults.push(mediaObj) : null;
-			valid = true;
-		});
-	} else {
-		finalResults = result;
-	}
-
-	if (finalResults.length > 0) {
-		return res.status(200).json(finalResults);
-	} else if (finalResults.length === 0) {
-		return res.status(204).json(finalResults);
-	} else {
-		return res.status(500);
-	}
-});
-
-app.get("/media/:id", async (req, res) => {
-	const requiredId = req.params.id;
-	try {
-		const mediaObj = {
-			...(await mediaStore.retrieve(parseInt(requiredId)))
+		const result = [];
+		const answer = {
+			count: 0,
+			previous: "",
+			next: "",
+			results: []
 		};
-		mediaObj.id = `/media/${requiredId}`;
-		if (mediaObj) {
-			res.status(200).json(mediaObj);
+
+		if (limit && offset) {
+			limit = parseInt(limit);
+			offset = parseInt(offset);
+			for (let x = offset; x < offset + limit; x++) {
+				let add = false;
+				let mediaObj = {};
+				try {
+					mediaObj = await mediaStore.retrieve(x);
+					add = true;
+				} catch (e) {
+					return res.status(500).send();
+				}
+				add
+					? result.push({
+							...mediaObj,
+							id: `/media/${x}`
+					  })
+					: null;
+			}
+		} else {
+			let allMedia;
+			try {
+				allMedia = await mediaStore.retrieveAll();
+			} catch (e) {
+				return res.status(500).send();
+			}
+
+			allMedia.forEach(media => {
+				result.push({
+					...media,
+					id: `/media/${media.id}`
+				});
+			});
 		}
-	} catch (e) {
-		res.status(404).json({ error: "Not found" });
-	}
-});
+		let valid = true;
+		let finalResults = [];
 
-// TODO: Add tests to this. Check if the object actually is created or not, POST to this endpoint first then use the GET by id endpoint to check.
-app.post("/media", async (req, res) => {
-	const { name, type, desc } = req.body;
-	await mediaStore.create(name, type, desc);
-	return res.status(201).json({ success: true });
-});
+		if (queries) {
+			result.forEach(mediaObj => {
+				const values = Object.values(mediaObj);
+				if (queryName && valid) valid = values.includes(name);
+				if (queryType && valid) valid = values.includes(type);
+				if (queryDesc && valid) valid = values[3].includes(desc);
 
-// TODO: Add tests to this. Check if the object actually is created or not, POST to this endpoint first then use the GET by id endpoint to check.
-// TODO: Check how to receive data, currently doing it through request headers.
-app.put("/media/:id", async (req, res) => {
-	const { name, type, desc } = req.body;
-	await mediaStore.update(req.params.id, name, type, desc);
-	return res.status(200).json({ success: true });
-});
+				valid ? finalResults.push(mediaObj) : null;
+				valid = true;
+			});
+		} else {
+			finalResults = result;
+		}
 
-// TODO: Add tests to this. Check if the object actually is created or not, POST to this endpoint first then use the GET by id endpoint to check.
-// TODO: Not tested at all, should work hopefully.
-app.delete("/media/:id", async (req, res) => {
-	try {
-		const media = await mediaStore.retrieve(parseInt(req.params.id));
+		answer.results = finalResults;
+		answer.count = finalResults.length;
+
+		let prevObj;
+		let nextObj;
+		try {
+			prevObj = (await mediaStore.retrieve(offset - 1)).id;
+		} catch (e) {
+			prevObj = null;
+		}
+
+		try {
+			nextObj = (await mediaStore.retrieve(offset + limit + 1)).id;
+		} catch (e) {
+			nextObj = null;
+		}
+
+		answer.previous =
+			offset - 1 < 0 || !prevObj ? null : `/media/${prevObj}`;
+		answer.next =
+			offset + limit > (await mediaStore.retrieveAll()).length || !nextObj
+				? null
+				: `/media/${nextObj}`;
+
+		if (finalResults.length > 0) {
+			return res.status(200).json(answer);
+		} else if (finalResults.length === 0) {
+			return res.status(204).json(answer);
+		}
+	});
+
+	app.get("/media/:id", async (req, res) => {
+		const requiredId = req.params.id;
+		try {
+			const mediaObj = {
+				...(await mediaStore.retrieve(parseInt(requiredId)))
+			};
+			mediaObj.id = `/media/${requiredId}`;
+			if (mediaObj) {
+				res.status(200).json(mediaObj);
+			}
+		} catch (e) {
+			res.status(404).send();
+		}
+	});
+
+	app.post("/media", async (req, res) => {
+		const { name, type, desc } = req.body;
+		try {
+			await mediaStore.create(name, type, desc);
+		} catch (e) {
+			return res.status(500).send();
+		}
+		return res.status(201).send();
+	});
+
+	app.put("/media/:id", async (req, res) => {
+		if (checkIfValidDeadMedia(req.body)) {
+			const { name, type, desc } = req.body;
+			try {
+				await mediaStore.update(req.params.id, name, type, desc);
+			} catch (e) {
+				return res.status(500).send();
+			}
+			return res.status(200).send();
+		} else {
+			return res.status(400).send();
+		}
+	});
+
+	app.delete("/media/:id", async (req, res) => {
+		const movieObj = await mediaStore.retrieve(req.params.id);
+		if (movieObj) {
+
+		}
+		let deleted = false;
 		try {
 			await mediaStore.delete(req.params.id);
-			res.status(204).json({ success: true });
+			deleted = true;
 		} catch (e) {
-			res.status(500);
+			return res.status(500).send();
 		}
-	} catch (e) {
-		res.status(404).json({ error: e });
-	}
-});
+		return !deleted ? res.status(404).send() : res.status(204).send();
+	});
 
-const validTransfer = ({ source, target }) => source && target;
+	const validTransfer = ({ source, target }) => source && target;
 
-// TODO: Basically works, make better.
-app.post("/transfer", async (req, res) => {
-	if (validTransfer(req.body)) {
-		const id = parseInt(req.body.source.slice(7));
-		const mediaObj = await mediaStore.retrieve(id);
-		await axios({
-			method: "POST",
-			url: req.body.target,
-			data: mediaObj
-		});
-		await mediaStore.delete(id);
-	}
-});
+	// TODO: Basically works, make better.
+	app.post("/transfer", async (req, res) => {
+		if (validTransfer(req.body)) {
+			const id = parseInt(req.body.source.slice(7));
+			const mediaObj = await mediaStore.retrieve(id);
+			await axios({
+				method: "POST",
+				url: req.body.target,
+				data: mediaObj
+			});
+			await mediaStore.delete(id);
+		}
+	});
+	return app;
+};
 
-app.listen(PORT, () => {
-	console.log(`http://localhost:${PORT}`);
-});
+const server = mediaStore =>
+	startApp(mediaStore).listen(PORT, () => {
+		console.log(`http://localhost:${PORT}`);
+	});
 
-module.exports = app;
+module.exports = { startApp, parseAndValidateFile, server };

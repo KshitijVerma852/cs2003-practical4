@@ -44,7 +44,7 @@ class MediaStore {
   create(name, type, desc) {
     return new Promise((resolve, reject) => {
       if (this.errorModeOn) {
-        reject("Error in store.");
+        reject('Error in store.');
       }
       setTimeout(() => {
         const m = new DeadMedia(this.#nextId, name, type, desc);
@@ -63,10 +63,10 @@ class MediaStore {
   retrieve(id) {
     return new Promise((resolve, reject) => {
       if (this.errorModeOn) {
-        reject("Error in store.");
+        reject('Error in store.');
       }
       setTimeout(() => {
-        const predicate = (m) => m.id === id;
+        const predicate = m => m.id === id;
         const found = this.#resources.find(predicate);
         if (found) {
           resolve(found);
@@ -84,7 +84,7 @@ class MediaStore {
   retrieveAll() {
     return new Promise((resolve, reject) => {
       if (this.errorModeOn) {
-        reject("Error in store.");
+        reject('Error in store.');
       }
       setTimeout(() => {
         return resolve(this.#resources);
@@ -103,10 +103,10 @@ class MediaStore {
   update(id, name, type, desc) {
     return new Promise((resolve, reject) => {
       if (this.errorModeOn) {
-        reject("Error in store.");
+        reject('Error in store.');
       }
       setTimeout(() => {
-        const idx = this.#resources.findIndex((m) => m.id == id);
+        const idx = this.#resources.findIndex(m => m.id == id);
         const wasFound = idx != -1;
         if (wasFound) {
           this.#resources[idx].name = name;
@@ -128,10 +128,10 @@ class MediaStore {
   delete(id) {
     return new Promise((resolve, reject) => {
       if (this.errorModeOn) {
-        reject("Error in store.");
+        reject('Error in store.');
       }
       setTimeout(() => {
-        const idx = this.#resources.findIndex((m) => m.id == id);
+        const idx = this.#resources.findIndex(m => m.id == id);
         const wasFound = idx != -1;
         if (wasFound) {
           const removedResource = this.#resources[idx];
