@@ -35,7 +35,7 @@ describe("PUT /media", () => {
 	});
 });
 
-describe("DELETE /media", () => {
+describe("DELETE /media/id", () => {
 	it("should return a 500", async() => {
 		const res = await supertest(startApp(mediaStore)).delete("/media/4");
 		expect(res.statusCode).toBe(500);

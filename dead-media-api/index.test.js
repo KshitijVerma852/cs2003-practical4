@@ -27,7 +27,7 @@ describe("GET /media", () => {
 			expect(res.statusCode).toBe(200);
 			expect(res.body.results.length).toBe(5);
 		});
-		it("should return null for previous if when offset is 0.", async () => {
+		it("should return null for previous when offset is 0.", async () => {
 			const res = await supertest(startApp(mediaStore)).get(
 				"/media?offset=0"
 			);
@@ -87,9 +87,9 @@ describe("GET /media", () => {
 describe("POST /media", () => {
 	it("should accept new data and save it.", async () => {
 		const newMedia = {
-			name: "Cool movie",
-			type: "DVD",
-			desc: "Very very cool movie."
+			name: "Pulp Fiction",
+			type: "CD",
+			desc: "Quentin Tarantino's cult classic crime film."
 		};
 		await supertest(startApp(mediaStore)).post("/media").send(newMedia);
 
