@@ -167,10 +167,10 @@ const startApp = mediaStore => {
 			};
 			mediaObj.id = `/media/${requiredId}`;
 			if (mediaObj) {
-				res.status(200).json(mediaObj);
+				return res.status(200).json(mediaObj);
 			}
 		} catch (e) {
-			res.status(404).send();
+			return res.status(404).send();
 		}
 	});
 
@@ -200,6 +200,7 @@ const startApp = mediaStore => {
 
 	app.delete("/media/:id", async (req, res) => {
 		let movieObj;
+		// Check if the movie exists or not.
 		try {
 			movieObj = await mediaStore.retrieve(parseInt(req.params.id));
 		} catch (e) {
